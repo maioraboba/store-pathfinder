@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Маршрутник — развозка</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <header class="sidebar-header">
+        <h1>Маршрутник</h1>
+        <button id="settings-btn" title="Настройки" aria-label="Настройки">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </header>
+
+      <section class="add-point">
+        <input
+          id="address-input"
+          type="text"
+          placeholder="Адрес магазина или название"
+          autocomplete="off"
+        />
+        <button id="add-by-address-btn">Найти и добавить</button>
+        <p class="hint">или кликни по карте, чтобы поставить точку</p>
+      </section>
+
+      <section class="endpoints">
+        <div class="endpoint-row">
+          <label>Старт:</label>
+          <select id="start-select"><option value="">— выбрать —</option></select>
+        </div>
+        <div class="endpoint-row">
+          <label>Финиш:</label>
+          <select id="end-select">
+            <option value="">— тот же, что старт —</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="points-section">
+        <div class="points-header">
+          <h2>Точки</h2>
+          <div class="points-actions">
+            <button id="select-all-btn" title="Выбрать все">✓ все</button>
+            <button id="clear-selection-btn" title="Снять все">✗</button>
+          </div>
+        </div>
+        <ul id="points-list"></ul>
+        <div class="totals">
+          <span>Выбрано: <b id="selected-count">0</b></span>
+          <span>Общий вес: <b id="total-weight">0</b> кг</span>
+        </div>
+      </section>
+
+      <section class="route-controls">
+        <button id="build-route-btn" class="primary">Построить маршрут</button>
+        <button id="open-in-yandex-btn">Открыть в Я.Картах</button>
+        <button id="clear-route-btn" class="secondary">Очистить маршрут</button>
+      </section>
+
+      <section id="route-summary" class="route-summary hidden">
+        <h2>Маршрут</h2>
+        <div class="route-stats">
+          <span>Расстояние: <b id="route-distance">—</b></span>
+          <span>Общий вес: <b id="route-duration">—</b></span>
+        </div>
+        <ol id="route-order"></ol>
+      </section>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <div id="onboarding" class="onboarding hidden">
+    <div class="onboarding-card">
+      <h1>Маршрутник</h1>
+      <p class="onboarding-lead">
+        Приложение для построения маршрута развозки. Чтобы оно работало,
+        нужен персональный ключ Яндекс Карт — он бесплатный.
+      </p>
+
+      <ol class="onboarding-steps">
+        <li>
+          Открой
+          <a href="https://developer.tech.yandex.ru/services" target="_blank" rel="noopener">
+            developer.tech.yandex.ru/services
+          </a>
+          и войди под Яндекс-аккаунтом.
+        </li>
+        <li>
+          Нажми <b>«Подключить APIs»</b> → выбери <b>«JavaScript API и HTTP Геокодер»</b>
+          (бесплатный тариф).
+        </li>
+        <li>
+          Скопируй ключ из таблицы и вставь его сюда:
+        </li>
+      </ol>
+
+      <label class="onboarding-input">
+        <input id="onboarding-key" type="text" placeholder="Вставь ключ сюда" autocomplete="off" />
+        <button id="onboarding-save" class="primary">Сохранить и запустить</button>
+      </label>
+
+      <p class="onboarding-hint">
+        Ключ сохранится только в твоём браузере. У других пользователей —
+        свои ключи, никто не сможет потратить твой лимит.
+      </p>
+    </div>
+  </div>
+
+  <dialog id="point-dialog">
+    <form method="dialog">
+      <h3 id="point-dialog-title">Точка</h3>
+      <label>
+        Название
+        <input id="point-name" type="text" required />
+      </label>
+      <label>
+        Адрес
+        <input id="point-address" type="text" />
+      </label>
+      <label>
+        Вес груза (кг)
+        <input id="point-weight" type="number" min="0" step="0.1" value="0" />
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="point-cancel-btn">Отмена</button>
+        <button value="delete" type="button" id="point-delete-btn" class="danger">Удалить</button>
+        <button value="save" id="point-save-btn" class="primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog">
+    <form method="dialog">
+      <h3>Настройки</h3>
+      <label>
+        API-ключ Яндекс Карт
+        <input id="api-key-input" type="text" placeholder="Вставь ключ сюда" />
+      </label>
+      <p class="hint">
+        Получить ключ:
+        <a href="https://developer.tech.yandex.ru/services" target="_blank" rel="noopener">
+          developer.tech.yandex.ru
+        </a>
+        — раздел JavaScript API и HTTP Геокодер.
+      </p>
+      <label class="danger-zone">
+        <span>Опасная зона</span>
+        <button type="button" id="reset-data-btn" class="danger">Удалить все точки</button>
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="settings-cancel-btn">Закрыть</button>
+        <button value="save" id="settings-save-btn" class="primary">Сохранить и перезагрузить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="config.local.js" onerror="console.info('config.local.js не найден — используй UI настроек')"></script>
+  <script src="app.js"></script>
+</body>
+</html>
