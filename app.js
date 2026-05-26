@@ -524,9 +524,36 @@ function haversineKm(a, b) {
 }
 
 function optimizeOrder(startPoint, middlePoints, endPoint) {
+  const isRoundTrip = !endPoint || endPoint.id === startPoint.id;
+
+  if (middlePoints.length === 0) {
+    return isRoundTrip ? [startPoint] : [startPoint, endPoint];
+  }
+
+  let best = null;
+  let bestDist = Infinity;
+
+  for (let firstIdx = 0; firstIdx < middlePoints.length; firstIdx++) {
+    const candidate = nearestNeighborRoute(
+      startPoint, middlePoints, endPoint, isRoundTrip, firstIdx
+    );
+    twoOpt(candidate, isRoundTrip);
+    const d = routeDistance(candidate, isRoundTrip);
+    if (d < bestDist) {
+      bestDist = d;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+function nearestNeighborRoute(startPoint, middlePoints, endPoint, isRoundTrip, forcedFirstIdx) {
   const result = [startPoint];
   const remaining = [...middlePoints];
-  let current = startPoint;
+  let current = remaining[forcedFirstIdx];
+  result.push(current);
+  remaining.splice(forcedFirstIdx, 1);
+
   while (remaining.length > 0) {
     let bestIdx = 0;
     let bestDist = Infinity;
@@ -541,12 +568,22 @@ function optimizeOrder(startPoint, middlePoints, endPoint) {
     result.push(current);
     remaining.splice(bestIdx, 1);
   }
-  const isRoundTrip = !endPoint || endPoint.id === startPoint.id;
+
   if (!isRoundTrip) {
     result.push(endPoint);
   }
-  twoOpt(result, isRoundTrip);
   return result;
+}
+
+function routeDistance(route, isRoundTrip) {
+  let d = 0;
+  for (let i = 0; i < route.length - 1; i++) {
+    d += haversineKm(route[i], route[i + 1]);
+  }
+  if (isRoundTrip && route.length > 1) {
+    d += haversineKm(route[route.length - 1], route[0]);
+  }
+  return d;
 }
 
 function twoOpt(route, isRoundTrip) {
@@ -598,10 +635,8 @@ function buildRoute() {
   routeOrder = optimizeOrder(startPoint, middle, endPoint);
   renderMarkers();
 
-  let distanceKm = 0;
-  for (let i = 0; i < routeOrder.length - 1; i++) {
-    distanceKm += haversineKm(routeOrder[i], routeOrder[i + 1]);
-  }
+  const isRoundTrip = !state.endId || state.endId === state.startId;
+  const distanceKm = routeDistance(routeOrder, isRoundTrip);
   showRouteSummary(distanceKm, routeOrder);
 
   if (map && routeOrder.length > 1) {
